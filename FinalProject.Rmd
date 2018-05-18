@@ -1,0 +1,317 @@
+---
+author: "Narjit Singh"
+date: "5/14/2018"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+<center><h1>Bollywood : Indian Cinema</h1>
+<h2> Narjit Singh </h2></center>
+<br><br>
+
+<center><img src="picture.jpg" alt="Bollywod Picture"></center>
+<br><br>
+<h1>Background</h1><hr>
+
+<p> Bollywood is the name for Indian film Industry, similar to Hollywood. The B in Bollywood comes from Bombay (now Mumbai), which is considered to be the heartland for producing Indian movies. Bollywood is massive, it makes around 800 films a year and about 14 million  Indian people go to the cinema every day. </p>
+
+<p>Bollywood started in 1899. Just like Hollywood the films were silent until the 1930. One of the biggest thing that separates Bollywood from Hollywood is that Bollywood movies are colorful, crammed with singing, dancing and loads of costumes changes. Most of the movies produced in Bollywood on average would consist of 5-8 songs. Most of the stories in the initial days were based on a formula where a boy meets a girl and how they fall in love with each other and how they would struggle for family approval. There was romance but no kissing!</p> 
+
+<p>Currently, the industry is filled with big stars and each star have their own big fan ban.  That is what we will focus on discussing in our analysis. In this document, I will try to analyze various things about Bollywood. Things like how many Bollywood movies are produced every years, who is the biggest actor, how many hit movies are produced every year, how many flop movies, biggest hits, we will also try to find the favorite genre of movies that are produced in Bollywood. Furthermore, we will try to find if Bollywood has made progress in terms of success rate.</p>
+<h3>Datasets </h3>
+<p> In order to find all of the information mentioned above, I will be using Bollywood Movie Dataset from Kaggle.com. <a href="https://www.kaggle.com/mitesh58/bollywood-movie-dataset/data">(Link)</a></p> This dataset has three individual datasets in comma separated value (csv), but for the purposes of this tutorial I will be using  BollywoodActorRanking.csv, BollywoodMovieDetail.csv </p>
+
+```{r warning=FALSE, message=FALSE, include=FALSE}
+library(ggplot2)
+library(tidyverse)
+library(dplyr)
+library(plotly)
+library(highcharter)
+library(readr)
+library(tidyr)
+library(rvest)
+library(tibble)
+library(knitr)
+library(rvest)
+
+
+```
+
+
+<h1> Load the Data </h1><hr>
+<p> Let's load the BollywoodMovieDetail data. We will be using read.csv() function to read the data in R. For example, we are using BollywoodMovieDetail.csv. I can read this particular data by doing read.csv(“BollywoodMovieDetail.csv”). Since, I will be using this data throughout the tutorial, I will assign it to a variable named bollywoodTable. This data contains the name of the movies, their release dates, genre, writers, actors, and hit, flop, directors and information about writers. Since, the data is really big, I will shorten it to just print the first 10 contents of the csv file. This is another way to make sure that contents were read correctly from the csv file. In R, we do that by using Kable. Kable is a very simple table generator.  So here, we will generate a simple table that would only print the first ten contents located in the  BollywoodMovieDetail.csv file. </p>
+```{r load_data, message=FALSE}
+bollywoodTable <- read.csv("BollywoodMovieDetail.csv")
+kable(bollywoodTable[1:10,])
+```
+
+<p> From the table above me can see that our data was loaded properly and it is ready to be used for analysis. </p>
+
+<h1> Bollywood Movies Trend </h1><hr>
+<p> I personally watch a lot of Bollywood movies and I have seen the number of movies released increased every year. Let's see if we can find this information and see if my intuition is correct. I plan to find this information, by grabbing the releaseYear column from the csv and count how many movies have released since 2000. I will be using a ggplot package to create a graph that would allow us to see visual representation of the data. The ggplot2 package is a powerful package that allow users to create elegant and complex plots. Using the plot, we should be able to find a trend. For example, the increasing line on the graph would indicate a positive trend. While a line decreasing would indicate a negative trend. Let’s find this out by drawing the plot of movies released in Bollywood so far.</p>
+```{r}
+bollywoodTable %>%
+            group_by(releaseYear) %>% 
+            count()%>% 
+            ggplot(aes(x=releaseYear, y=n))+
+            geom_point() +
+            geom_smooth(method=lm)+
+            labs(title="Number of Movies Released Every Year",x = "Year", y = "Movies Released")
+```
+
+<h3> Graph Explanation </h3>
+</p>From the graph, we can see that number of movies had a positive trend overall. There were times when number of movies released declined, like in 2006, and 2007. But mostly, it has been a positive trend. This shows that industry is growing every year and demand of Bollywood movies is increased every year as well.</p> 
+
+<h2> Different Perspective </h2><hr>
+Although the graph in the previous problem helped us telling about the trend of Bollywood movies, it was somewhat confusing to see how many numbers of movies were released every year and if numbers increased from year to year. Let’s draw a bar graph to see the trend in more details.  
+
+```{r}
+bollywoodTable %>% group_by(releaseYear) %>% count()%>%
+                  arrange(desc(n))%>% 
+                  ungroup()%>%
+                  ggplot(aes(x=releaseYear,y =n))+
+                  xlab("Year")+
+                  ylab("Movies Released")+
+                  geom_bar(stat="identity",fill="blue") +
+                  ggtitle("Number of Bollywood Movies Released from 2000-2015")+
+                  theme_update(plot.title = element_text(hjust = 0.5))+
+                  scale_y_continuous()+
+                  coord_flip(xlim = NULL, ylim = NULL, expand = TRUE) 
+
+```
+
+<p> The bar graph above gives us a better understanding of how many movies released every year starting from 2000 to 2015. This time I did order the data based on number of releases, it is based on years. This actually tells a different story. As the number of years increases the numbers of movies did not increase most of the times. If we look at 2005, there were about 106 movies released, while in in 2006, there were about only 60 movies released. This gives us a better understanding. We can also see from the graph, that overall the number of movies has increased. For example, in 2000 there were only 60 movies released, while in 2010, there were around 115 movies released. This shows that there is a positive trend in number of movies being released every year in Bollywood.</p>
+
+
+<h2> Movies Analysis Based on Genre </h2><hr>
+<p> In previous sections, we found out how many Bollywood movies are released every year. Let’s switch gears and see what type of Bollywood are released every year. In order to find this out, we will use the same dataset but this time focus on the “genre” column.  We will use this column to find out what type of movies are released every year. </p>
+
+<h3> Most Favorite Genre</h3>
+<p>In order to find the most favorite genre in Bollywood,  we need to get the column “genre” and it’s data. We will use group_by operating in R.  Group_ by() is part of dplyr package and it groups a dataframe based on certain fields. One thing to note is that group_by only groups the values, it doesn not provide any sort of quantitative value. That’s where summarize operation comes into the play. In the code, you can see that we are using a summarize operation. Summarize function will allow us to produce stratified summary statistics and allow us to store the data in a data frame for plotting. We will use counts to count how many genres there are and which one is the most favorite and which one is the least favorite (<b>we will find that in later sections</b>).   </p>
+
+```{r}
+library(dplyr)
+df <- bollywoodTable %>%
+  group_by(genre) %>%
+  summarize(counts = n()) %>%
+  arrange(desc(counts))
+y<-kable(df[1:15,])
+y
+
+```
+
+<p> The table above shows the highest number of movies produced based on genre. It can be seen that “Drama” is the number one genre that Bollywood movies are produced in. Second genre is the combination of drama, comedy, and Romance. I used the arrange operation to arrange the number of genres in highest to lowest. Doing this, made it easier for me to find the most favorite genre easily because the highest number would be on the top.  </p>
+
+
+<h3> Least Favorite Genre</h3>
+<p>Using the same function, let’s find out the least favorite genre in Bollywood. </p>
+
+```{r}
+library(dplyr)
+least <- bollywoodTable %>%
+  group_by(genre) %>%
+  summarize(counts = n()) %>%
+  arrange((counts))
+y<-kable(least[1:15,])
+y
+
+```
+
+<p>From the above table, we can clearly see that most people don’t like to watch adventure, and sci-fi movies. This makes sense now. In the previous section, we found out that most of the movies released in Bollywood are based on drama. So a lot of people want to watch drama movies not sci-fi or adventure.  That is why the number of movies released based on adventure are really less. Although, there are also other categories here that have count of 1, but these are combination of other genres as well. So, if we had to find the least favorite genre, then we would be looking for one genre, and from the table we can see that Sci-Fi and Adventure are the two. </p>
+
+<h3> Genre Graphs</h3>
+<p> Let’s plot all the results that we found about movies based on their genre. </p>
+
+```{r}
+
+x<-head(df, n=15)
+
+ggplot(x, aes(genre, counts, colour = genre)) + geom_point()+
+ xlab("Genre Numbers") +
+ ylab("Genre") +
+ ggtitle("Number of movies based on Genre")+
+ geom_smooth(method = 'lm')+
+ theme(axis.text.x = element_text(angle = 90, vjust=0.5, hjust=0))
+
+```
+
+<p>From the above plot, we can see the top 15 genres in Bollywood. We can also see that most of the genres are closed together, whereas “drama” is in totally different location. This is an great indication of how Bollywood loves producing drama movies. This is also an indication of how people love drama movies. Bollywood wouldn’t be producing these movies at such a high rate, they people didn’t love them. </p>
+
+<h1> Biggest Hit Bollywood Movies </h1><hr>
+
+<p> The industry runs on how much money a movie makes, which is another way of saying how many people appreciated the movie. The dataset contains a column, “hitFlop”,  I will be using this column to find which movies were hit and which flopped. The hit and flop column is populated based on rating from various sources like IMDB rating, and how much money they made. Here is the rating scale define in the csv file:  </p>
+
+<b>Rating Scale:</b><br>
+<p><b>1</b> Ridiculous (Burn)
+<p><b>2</b> Awful (Nobody can you cant borrow it))
+<p><b>3</b> Bad (No but you can borrow it) 
+<p><b>4</b> ehh (No desire to watch again might with someone) 
+<p><b>5</b> Average (Probably not) 
+<p><b>6</b> Good (Maybe)
+<p><b>7</b> Good + (Probably) 
+<p><b>8</b> Very Good (Again) 
+<p><b>9</b> Excellent (Again and Again) 
+<p><b>10</b> Amazing (Indefinitely)
+  
+<h3> Plot 1: Rating higher than 4</h3>
+<p>Since, the rating of 5 describes the movie as average, we will start from that. Let’s find out all the movies with a rating of  5 and above. Since we want to find out all the movies with a rating of five or more, we will use the filter function to filter out the movies we want. In the code, I am using filter function to find all the movies with a hitFlop rating of above 5. After filtering out, I am just creating a bar graph, that would allow me to see visual representation of the results.</p> 
+```{r}
+
+bollywoodTable %>% group_by(releaseYear,hitFlop) %>% count()%>%
+                  arrange(desc(n))%>% 
+                  filter(hitFlop > 4)%>%
+                  ggplot(aes(x=releaseYear,y = hitFlop))+
+                  xlab("Year")+
+                  ylab("Movies Released")+
+                  geom_bar(stat="identity",fill="orange") +
+                  ggtitle("Number of Bollywood Movies Released that had rating higher than 4")
+```
+
+<p>The graph above shows the movies that had rating or 5 or more and these are considered to be the movies that did well on box-office.</p>
+
+<h3> Plot 2: Biggest Hits (rating higher than 8)</h3>
+
+```{r}
+
+bollywoodTable %>% group_by(releaseYear,title,hitFlop) %>% count()%>%
+                  arrange(desc(n))%>% 
+                  filter(hitFlop > 8)%>%
+                  ggplot(aes(x=releaseYear,y = title))+
+                  xlab("Year")+
+                  ylab("Movies Released")+
+                  geom_bar(stat="identity",fill="green") +
+                  ggtitle("Number of Bollywood Movies Released from 2005-2015")
+```
+
+
+<p> From the graph, it can been that PK was the highest rate movie, second was gadar ek prem katha, then dhoom 3 , and 3 idiots. I have seen all of these watches. When these movies were released, the response was tremendous. The theaters were full for months. The plot is able to convey that very accurately. </p>
+
+<h3> Table 1: Movies based on Rating</h3>
+
+<p>Let’s find out how many movies are released based on the rating. This will tell us how many movies Bollywood produces are success and how many are flops. </p>
+
+```{r}
+
+library(dplyr)
+rating <- bollywoodTable %>%
+  group_by(hitFlop) %>%
+  summarize(counts = n()) 
+movies_list <- head(rating, 9)
+y<-kable(rating)
+y
+```
+
+<p>This is really surprising. The rating of number 1 (worst rating) outperforms the number of high rated movies. This means Bollywood industry is producing more flop movies than hit movies. It can be seen in the table that 729 received the lowest rating possible for movie.</p>
+
+<h3> Visual Representation of Table 1</h3>
+<p>Let’s plot table one and see how it looks like. </p>
+
+```{r}
+ggplot(movies_list, aes(hitFlop, counts, colour = hitFlop)) + geom_point()+
+  xlab("Rating") +
+ ylab("Genre") +
+ ggtitle("Movies Ratings")+
+ theme(axis.text.x = element_text(angle = 90, vjust=0.5, hjust=0))
+
+```
+
+<p>The graph really shows that Bollywood industries has produced a lot of flop movies than hit movies. As you can see from the graph, there is one dot in the left hand corner that is all the way at the top, and to the left. This dot shows that there more than 700 movies that received a rating of 1. This also shows that there are very few (4) movies that received the highest rating possible. These results are not very promising for bollywood industry.   </p>
+
+<h1> Actors </h1><hr>
+<p>The dataset we have used in the previous section does not provide any information about actors, how successful they are as an actor, and what are their ratings. As I talked earlier, Bollywood Movie Dataset from Kaggle.com had three datasets. So far we have used, “BollywoodMovieDetail.csv”. Let’s use the dataset,  “BollywoodActorRanking.csv” to analyze all the actors of Bollywood. </p>
+```{r}
+actor_table <- read.csv("BollywoodActorRanking.csv")
+kable(actor_table[1:10,])
+
+```
+
+<p>The table above gives a list of all the actors with their rating, movie count and google hits. We want to find out who is the biggest actor in the industry, so we need to arrange the table based on rating sum of the actor.  </p>
+
+<h3> Biggest Bollywood Starts </h3>
+```{r}
+library(dplyr)
+actor_ratings <- actor_table %>%
+  group_by(ratingSum) %>%
+  arrange(desc(ratingSum))
+y<-kable(actor_ratings[1:15,])
+y
+```
+
+<p>The table above arranges the actors based on their rating sum. Based on this, Akshay Kumar turns out to be the biggest star in Bollywood.  Using the group_by and arrange functions (described previously) I was able to make the list sorted based on the rating. </p>
+
+<h3> Plot 1: Top Five stars in Bollywood </h3>
+<p> let's find out the top five stars in Bollywood. </p>
+```{r}
+actor_ratings %>% group_by(ratingSum,actorName) %>% count()%>%
+                  arrange(desc(n))%>% 
+                  filter(ratingSum > 2000)%>%
+                  ggplot(aes(x=actorName,y = ratingSum))+
+                  xlab("Actor Name")+
+                  ylab("Rating Sum")+
+                  geom_bar(stat="identity",fill="green") +
+                  ggtitle("Highest rated actors in Bollywood")
+```
+<p>It can be seen that Akshay Kumar is the number one star in bollywood, then comes Salman Khan, Ajay Devgan, then Kareena Kapoor (actress) , and Amitabh Bachchan.</p>
+<b><p> Find more information about these actors click on the links below: </p></b>
+
+<p> 1. <a href="https://en.wikipedia.org/wiki/Akshay_Kumar"> Akshay Kumar</a></p>
+
+<p> 2. <a href="https://en.wikipedia.org/wiki/Salman_Khan">Salman Khan</a></p>
+
+<p> 3. <a href="https://en.wikipedia.org/wiki/Ajay_Devgn">Ajay Devgan</a></p>
+
+<p> 4. <a href="https://en.wikipedia.org/wiki/Kareena_Kapoor">Kareena Kapoor</a></p>
+
+<p> 5. <a href="https://en.wikipedia.org/wiki/Amitabh_Bachchan">Amitabh Bachchan</a></p>
+
+<h3> Actor: Highest Number of Movies </h3>
+<p>Let’s find out actors with highest number of movies. </p>
+```{r}
+
+moviecount <- actor_table %>%
+  group_by(movieCount) %>%
+  arrange(desc(movieCount))
+y<-kable(moviecount[1:15,])
+y
+
+```
+
+<p> From the table above we can see that Akshay Kumar holds the title of highest number of movies in Bollywood and these results seem to match up with his ranking. If you check his page (<a href="https://en.wikipedia.org/wiki/Akshay_Kumar">Akshay Kumar</a>), you will find out that he completes about 3-4 movies a year and most of them are hit movies, which is extraordinary. </p>
+
+
+<h3> Plot: Actors with Number of Movies </h3>
+```{r}
+moviecount %>% group_by(movieCount,actorName) %>% count()%>%
+                  arrange(desc(n))%>% 
+                  filter(movieCount > 30)%>%
+                  ggplot(aes(x=actorName,y = movieCount))+
+                  xlab("Actor Name")+
+                  ylab("Movies Counts")+
+                  geom_bar(stat="identity",fill="green") +
+                  ggtitle("Actors with Highest number of movies")+
+ theme_update(plot.title = element_text(hjust = 0.5))+
+ scale_y_continuous()+
+ theme(axis.text.x = element_text(angle = 90, vjust=0.5, hjust=0))
+```
+
+<h1> More Information </h1><hr>
+<p> If you are interested in learning more about Bollywood, here are some resources: </p>
+
+<p> 1. <a href="https://en.wikipedia.org/wiki/Bollywood"> What is Bollywood?</a></p>
+
+<p> 2. <a href="http://www.bollywoodnews.org/">Bollywood News</a></p>
+
+<p> 3. <a href="https://boxofficeindia.com/">Box Office Collection and Ratings</a></p>
+
+<p> 4. <a href="https://en.wikipedia.org/wiki/List_of_highest-grossing_Indian_films">Biggest Bollywood Movies of All Time</a></p>
+
+
+
+<h1>Sources</h1><hr>
+<p> 1. <a href="https://www.kaggle.com/mitesh58/bollywood-movie-dataset/data"> Dataset</a></p>
+
+<p> 2. <a href="https://www.indiatvnews.com/entertainment/bollywood/bollywood-lifeline-for-pakistani-film-industry-25502.html"> Intro Image Used</a></p>
+
+
+<br><br><br><br>
